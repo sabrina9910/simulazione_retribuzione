@@ -1,25 +1,62 @@
 # RAL → Netto (Milano) — Prototipo
 
-Demo: <DEMO_URL>
-Repo: <REPO_URL>
+Demo: https://sabrina9910.github.io/simulazione_retribuzione/  
+Repo: https://github.com/sabrina9910/simulazione_retribuzione
 
-Calcolatore che stima netto annuo e mensile da RAL e mostra INPS lavoratore, IRPEF (lorda/netta) e addizionali (Lombardia/Milano).
-Disclaimer: calcolo annuale semplificato; il netto reale può variare mese per mese.
+Calcolatore (didattico) che stima **netto annuo** e **netto mensile** a partire dalla RAL e mostra il breakdown: INPS lavoratore, IRPEF (lorda/netta) e addizionali (regionale + comunale).
+
+> Disclaimer: calcolo annuale semplificato; il netto reale può variare per conguagli, mensilità, detrazioni effettive e altre componenti.
 
 ## Come provarlo
-Apri la demo e clicca:
-- “Carica esempio”
-- “Apri fonti” (parametri + link)
-- tab “Metodo” (formule e rounding)
+- Clicca **Carica esempio**
+- Vai nella tab **Metodo** (formule + rounding)
+- Apri **Fonti** (parametri + link)
 
-## Run locale (se serve)
-`python -m http.server 8000` → http://localhost:8000
+## Run locale
+```bash
+python -m http.server 8000
 
-## Trade-off: perché NON ho messo un file JSON di config
-Avrei potuto spostare i parametri (aliquote, soglie, link fonti) in un file JSON esterno e caricarlo a runtime.  
-Ho scelto di NON farlo in questo prototipo per mantenere la demo più semplice e robusta (meno moving parts, meno rischi di bug di caricamento su hosting statico).
 
-### A cosa servirebbe (se lo implementassi)
-- Aggiornare i parametri per anno (es. 2027) senza toccare la logica di calcolo.
-- Rendere più chiaro il versioning dei parametri (diff su GitHub).
-- Supportare più comuni/regioni/anni selezionando un “profilo” di parametri.
+==========================================================================================================================================
+
+## Logica dei JSON (composizione a livelli)
+
+L’idea è **comporre** i parametri finali come somma di più livelli, così puoi aggiornare singole parti (nazionale / regione / comune) senza toccare tutto.
+
+### 1) `national.json`
+Contiene le **regole comuni Italia**, ad esempio:
+- rounding (policy + decimali)
+- scaglioni IRPEF
+- detrazione lavoro dipendente (prototipo)
+- INPS extra (soglia + aliquota)
+
+Nota: nei JSON lo scaglione “senza limite” è rappresentato con `upTo: null` (nel codice JS verrà interpretato come `Infinity`).
+
+### 2) `addreg/<regione>.json`
+Contiene **solo** l’addizionale regionale della regione scelta:
+- `method` (tipo di calcolo)
+- soglie/aliquote/detrazioni regionali (se previste)
+
+### 3) `addcom/<prov>/<comune-codice>.json`
+Contiene **solo** l’addizionale comunale del comune scelto:
+- `rate` (aliquota)
+- `exemptionThreshold` (soglia di esenzione)
+- modalità soglia: `franchigia` oppure `notch`
+- metadati del comune (nome, provincia, codice catastale)
+
+### `profiles.json` (indice dei profili)
+`profiles.json` è un file “indice”: un `profileId` (es. `it-2026-milano`) punta ai 2 file territoriali corretti:
+- `addregRef` → file regionale
+- `addcomRef` → file comunale
+
+### Merge (in futuro)
+Quando (in futuro) verranno caricati a runtime, l’idea è un merge con questa priorità:
+**national < addreg < addcom** (ed eventuali override utente per ultimi).
+
+---
+
+## Come ho trovato/organizzato i dati (in pratica)
+
+- Ho separato i parametri per **Nazione / Regione / Comune** perché hanno frequenza di aggiornamento diversa e così i diff su GitHub restano piccoli e facili da revisionare.
+- Nei file dove un dato non è ancora verificato/definitivo uso `null` + un campo `note` o `lookup` per ricordare cosa completare (nei JSON non uso commenti).
+- `schemaVersion` e `lastUpdated` servono per tenere traccia dell’evoluzione dello schema e delle modifiche nel tempo.
