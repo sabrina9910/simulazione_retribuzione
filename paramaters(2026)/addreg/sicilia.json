@@ -1,0 +1,17 @@
+{
+    "schemaVersion": 1,
+    "scope": {
+        "country": "IT",
+        "year": 2026,
+        "type": "addizionale_regionale"
+    },
+    "region": {
+        "name": "Sicilia",
+        "mefAddRegCode": 16
+    },
+    "addizionaleRegionale": {
+        "method": "FLAT_RATE",
+        "rate": 0.0123,
+        "note": "PLACEHOLDER/PROTOTIPO: sostituisci con valori ufficiali."
+    }
+}

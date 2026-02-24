@@ -1,0 +1,25 @@
+{
+    "schemaVersion": 1,
+    "scope": {
+        "country": "IT",
+        "year": 2026,
+        "type": "addizionale_regionale"
+    },
+    "region": {
+        "name": "Lombardia"
+    },
+    "addizionaleRegionale": {
+        "method": "TWO_RATES_WITH_DETRAZIONE_RANGE",
+        "threshold": 28000,
+        "rateLow": 0.0173,
+        "rateHigh": 0.0333,
+        "detrazione": {
+            "range": {
+                "min": 28001,
+                "max": 30000
+            },
+            "value": 60
+        },
+        "note": "PLACEHOLDER/PROTOTIPO: sostituisci con valori ufficiali."
+    }
+}

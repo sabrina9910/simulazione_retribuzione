@@ -1,0 +1,31 @@
+{
+    "schemaVersion": 1,
+    "scope": {
+        "country": "IT",
+        "year": 2026,
+        "type": "addizionale_comunale"
+    },
+    "municipality": {
+        "name": "Palermo",
+        "province": "PA",
+        "cadastralCode": "G273"
+    },
+    "addizionaleComunale": {
+        "method": "MEF_LOOKUP_REQUIRED",
+        "rate": null,
+        "exemptionThreshold": null,
+        "supportedModes": [
+            "franchigia",
+            "notch"
+        ],
+        "defaultMode": "franchigia",
+        "lookup": {
+            "mefSearchUrl": "https://www1.finanze.gov.it/finanze2/dipartimentopolitichefiscali/fiscalitalocale/nuova_addcomirpef/risultato.htm",
+            "mefQueryHint": {
+                "regionCode_ra": 19,
+                "municipalityCode_cm": "G273"
+            }
+        },
+        "note": "Da completare con aliquota e soglia esenzione ufficiali."
+    }
+}

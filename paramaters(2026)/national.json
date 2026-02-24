@@ -1,0 +1,88 @@
+{
+    "schemaVersion": 1,
+    "country": "IT",
+    "year": 2026,
+    "lastUpdated": "2026-02-24",
+    "rounding": {
+        "policy": "ROUND_EACH_STEP",
+        "decimals": 2
+    },
+    "irpef": {
+        "method": "MARGINAL_BRACKETS",
+        "brackets": [
+            {
+                "upTo": 28000,
+                "rate": 0.23
+            },
+            {
+                "upTo": 50000,
+                "rate": 0.33
+            },
+            {
+                "upTo": null,
+                "rate": 0.43
+            }
+        ],
+        "note": "PLACEHOLDER/PROTOTIPO: sostituisci con valori ufficiali."
+    },
+    "detrazioneLavoroDipendente": {
+        "id": "ART13_ANNUALIZED_PROTOTYPE",
+        "note": "PLACEHOLDER/PROTOTIPO: valida formule e casistiche prima dell’uso reale.",
+        "rules": [
+            {
+                "range": {
+                    "min": 0,
+                    "max": 15000
+                },
+                "type": "FIXED",
+                "value": 1955
+            },
+            {
+                "range": {
+                    "min": 15000,
+                    "max": 28000
+                },
+                "type": "LINEAR_FORMULA",
+                "formula": {
+                    "expression": "1910 + 1190 * ((28000 - R) / 13000)"
+                }
+            },
+            {
+                "range": {
+                    "min": 28000,
+                    "max": 50000
+                },
+                "type": "LINEAR_FORMULA",
+                "formula": {
+                    "expression": "1910 * ((50000 - R) / 22000)"
+                }
+            },
+            {
+                "range": {
+                    "min": 50000,
+                    "max": null
+                },
+                "type": "FIXED",
+                "value": 0
+            }
+        ],
+        "extra": {
+            "type": "FIXED_IF_IN_RANGE",
+            "range": {
+                "min": 25000,
+                "max": 35000,
+                "inclusive": true
+            },
+            "value": 65
+        }
+    },
+    "inps": {
+        "workerRateDefault": 0.0919,
+        "extra": {
+            "enabledByDefault": true,
+            "threshold": 56224,
+            "rate": 0.01,
+            "note": "PLACEHOLDER/PROTOTIPO: extra 1% sopra soglia."
+        }
+    }
+}

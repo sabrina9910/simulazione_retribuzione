@@ -1,0 +1,20 @@
+{
+    "schemaVersion": 1,
+    "country": "IT",
+    "year": 2026,
+    "lastUpdated": "2026-02-24",
+    "profiles": [
+        {
+            "id": "it-2026-milano",
+            "label": "Lombardia / Milano",
+            "addregRef": "addreg/lombardia.json",
+            "addcomRef": "addcom/MI/milano-F205.json"
+        },
+        {
+            "id": "it-2026-palermo",
+            "label": "Sicilia / Palermo",
+            "addregRef": "addreg/sicilia.json",
+            "addcomRef": "addcom/PA/palermo-G273.json"
+        }
+    ]
+}

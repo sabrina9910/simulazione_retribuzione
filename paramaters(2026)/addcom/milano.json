@@ -1,0 +1,24 @@
+{
+    "schemaVersion": 1,
+    "scope": {
+        "country": "IT",
+        "year": 2026,
+        "type": "addizionale_comunale"
+    },
+    "municipality": {
+        "name": "Milano",
+        "province": "MI",
+        "cadastralCode": "F205"
+    },
+    "addizionaleComunale": {
+        "method": "FLAT_RATE_WITH_EXEMPTION_THRESHOLD",
+        "rate": 0.008,
+        "exemptionThreshold": 23000,
+        "supportedModes": [
+            "franchigia",
+            "notch"
+        ],
+        "defaultMode": "franchigia",
+        "note": "PLACEHOLDER/PROTOTIPO: sostituisci con valori ufficiali."
+    }
+}
