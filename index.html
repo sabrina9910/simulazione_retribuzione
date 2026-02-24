@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prototipo RAL → Netto (Milano)</title>
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <main class="container">
+        <header>
+            <h1>Calcolatore RAL → Netto (prototipo)</h1>
+            <p class="subtitle">
+                Scenario: dipendente (indeterminato), residente a Milano, nessuna agevolazione.
+            </p>
+        </header>
+
+        <section class="card">
+            <h2>Input</h2>
+
+            <p class="disclaimer">
+                Disclaimer: questo è un calcolo annuale semplificato. Il netto reale può variare mese per mese
+                (straordinari, premi, assenze, conguagli 730, addizionali trattenute a rate, ecc.).
+            </p>
+
+            <div class="grid">
+                <label>
+                    RAL lorda annua (€)
+                    <p>Scrivere senza il punto "." ES: 20000</p>
+                    <input id="ral" type="number" min="0" step="100" placeholder="es. 35000" />
+                </label>
+
+                <div class="switchField">
+                    <div class="switchLabel">Includi 13esima</div>
+                    <label class="switch">
+                        <input id="include13" type="checkbox" checked />
+                        <span class="slider"></span>
+                    </label>
+                    <div class="switchHint">ON = 13 mensilità, OFF = 12 mensilità</div>
+                </div>
+
+                <label>
+                    Aliquota INPS lavoratore (default 9,19%)
+                    <input id="inpsRate" type="number" min="0" max="0.3" step="0.0001" value="0.0919" />
+                </label>
+
+                <label>
+                    Applica detrazione lavoro dipendente (Art. 13 TUIR)
+                    <select id="useDetrazione">
+                        <option value="yes" selected>Sì</option>
+                        <option value="no">No</option>
+                    </select>
+                </label>
+
+                <label>
+                    Addizionale regionale (Lombardia)
+                    <select id="useAddReg">
+                        <option value="yes" selected>Sì</option>
+                        <option value="no">No</option>
+                    </select>
+                </label>
+
+                <label>
+                    Addizionale comunale (Milano)
+                    <select id="useAddCom">
+                        <option value="yes" selected>Sì</option>
+                        <option value="no">No</option>
+                    </select>
+                </label>
+
+                <label>
+                    Soglia addizionale comunale (Milano)
+                    <select id="comSogliaMode">
+                        <option value="franchigia" selected>Franchigia (più intuitivo): paghi solo oltre 23k</option>
+                        <option value="notch">Esenzione (notch): se superi 23k paghi su tutto</option>
+                    </select>
+                </label>
+
+                <label>
+                    Applica INPS extra 1% oltre soglia
+                    <select id="useInpsExtra">
+                        <option value="yes" selected>Sì</option>
+                        <option value="no">No</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="actions">
+                <button id="calcBtn" type="button">Calcola</button>
+                <button id="resetBtn" class="secondary" type="button">Reset</button>
+            </div>
+
+            <div class="quickActions">
+                <button id="exampleBtn" class="secondary" type="button">Carica esempio (RAL 35.000€)</button>
+                <button id="compareBtn" class="secondary" type="button">Confronta 12 vs 13</button>
+                <button id="sourcesBtn" class="secondary" type="button">Apri fonti</button>
+            </div>
+
+            <p class="hint">
+                Regola arrotondamento: arrotondo a centesimi dopo ogni passaggio di calcolo (INPS, imponibile, imposte,
+                netto).
+            </p>
+        </section>
+
+        <section id="results" class="card" style="display:none;">
+            <h2>Output</h2>
+
+            <div class="tabs">
+                <button id="tabRisultato" class="tab active" type="button">Risultato</button>
+                <button id="tabMetodo" class="tab" type="button">Metodo</button>
+            </div>
+
+            <div id="panelRisultato">
+                <div class="kpis">
+                    <div class="kpi">
+                        <div class="kpi-label">Netto annuo</div>
+                        <div class="kpi-value" id="nettoAnnuo"></div>
+                    </div>
+
+                    <div class="kpi">
+                        <div class="kpi-label">Netto mensile</div>
+                        <div class="kpi-value" id="nettoMensile"></div>
+                    </div>
+
+                    <div class="kpi">
+                        <div class="kpi-label">Totale trattenute</div>
+                        <div class="kpi-value" id="totTrattenute"></div>
+                    </div>
+                </div>
+
+                <details class="details" style="margin-top:10px;">
+                    <summary>Vedi lordi e imponibili</summary>
+
+                    <div class="metaBar" style="margin-top:10px;">
+                        <div class="metaItem">
+                            <span class="metaLabel">Lordo annuo (RAL)</span>
+                            <span class="metaValue" id="lordoAnnuo"></span>
+                        </div>
+
+                        <div class="metaItem">
+                            <span class="metaLabel">Lordo mensile (media)</span>
+                            <span class="metaValue" id="lordoMensile"></span>
+                        </div>
+
+                        <div class="metaItem">
+                            <span class="metaLabel">Imponibile IRPEF (sempl.)</span>
+                            <span class="metaValue" id="imponibileIrpefKpi"></span>
+                        </div>
+                    </div>
+                </details>
+
+                <div id="compareCard" class="compareCard" style="display:none;">
+                    <h3>Confronto 12 vs 13</h3>
+                    <table class="table">
+                        <tbody id="compareBody"></tbody>
+                    </table>
+                </div>
+
+                <h3>Dettaglio (annuo)</h3>
+                <table class="table">
+                    <tbody id="breakdownBody"></tbody>
+                </table>
+            </div>
+
+            <div id="panelMetodo" style="display:none;">
+                <h3>Formule usate (prototipo)</h3>
+                <div class="methodBox" id="methodBox"></div>
+            </div>
+        </section>
+
+        <dialog id="sourcesDialog" class="dialog">
+            <div class="dialogHeader">
+                <h3>Fonti e parametri usati</h3>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="copyParamsBtn" class="secondary" type="button">Copia parametri</button>
+                    <button id="closeSourcesBtn" class="secondary" type="button">Chiudi</button>
+                </div>
+            </div>
+
+            <div class="dialogBody">
+                <p class="dialogHint" id="sourcesMeta"></p>
+                <p class="dialogHint" id="copyStatus" style="margin-top:10px;"></p>
+
+                <h4>Parametri in uso (dinamici)</h4>
+                <div id="sourcesParams"></div>
+
+                <h4>Link fonti</h4>
+                <div id="sourcesLinks"></div>
+            </div>
+        </dialog>
+    </main>
+
+    <script type="module" src="./src/app.js"></script>
+</body>
+
+</html>
