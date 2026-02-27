@@ -153,8 +153,6 @@ Il netto reale può variare in base a:
 - conguagli, premi, TFR, assenze e altri fattori;  
 - eventuali agevolazioni fiscali non considerate qui.
 
----
 
-<p align="center">
-  <em>Realizzato come esercizio di product building per Jet HR Inbox, per dimostrare competenze in ricerca, modellazione del dominio, architettura dati e sviluppo front‑end.</em>
-</p>
+
+
