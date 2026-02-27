@@ -71,7 +71,7 @@ Il risultato è una **pagina web statica unica** dove:
 - Clicca **“Calcola”**.  
 - Vede in pagina:
   - **Netto annuale** stimato.  
-  - **Netto mensile** (12 mensilità).  
+  - **Netto mensile** (12/13 mensilità).  
   - **Breakdown delle trattenute**:
     - contributi INPS;  
     - IRPEF lorda / netta;  
