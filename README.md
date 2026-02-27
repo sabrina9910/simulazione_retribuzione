@@ -1,4 +1,4 @@
-# 💰 Simulazione RAL → Netto Italia 2026  
+# Simulazione RAL → Netto Italia 2026  
 
 
 [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-GitHub_Pages-blue?style=for-the-badge)](https://sabrina9910.github.io/simulazione_retribuzione/)
@@ -9,7 +9,7 @@ Questo progetto è un **prototipo web interattivo** che simula la proiezione di 
 
 ---
 
-## 🎯 Obiettivo del progetto
+## Obiettivo del progetto
 
 Lo scopo è rispondere in modo visibile e immediato alla domanda:
 
@@ -22,8 +22,20 @@ In contesti come colloqui, offerte di lavoro o dashboard HR, questo calcolo aiut
 - far capire al candidato quanto resta realmente della RAL.
 
 ---
+Per costruire il modello di calcolo, ho svolto una **ricerca mirata sulle fonti ufficiali e sui riferimenti aggiornati 2026**, tra cui:
 
-## 🧠 Contesto e assunzioni
+- **MEF** e fonti ufficiali sulle **aliquote IRPEF 2026** (23% / 33% / 43% per gli scaglioni standard).  
+- **INPS** e guide di calcolo contributivo per trovare l'aliquota standard dei **contributi a carico del lavoratore** (circa 9,19%, entro massimale).  
+- Calcolatori di stipendio netto e IRPEF aggiornati al 2026, che mostrano il ruolo delle **detrazioni lavoro dipendente** e delle **addizionali regionali e comunali**.
+
+Da questa analisi ho ricavato:
+
+- un **modello semplificato ma coerente** con le logiche fiscali italiane;  
+- una **struttura dati modulare** (JSON) che mappa aliquote, scaglioni e detrazioni in modo trasparente e facilmente verificabile.
+
+Il risultato non è un sistema fiscale professionale, ma un **prototipo di prodotto** che mostra come tradurre una complessità normativa in un'interfaccia semplice e didattica.
+
+## Contesto e assunzioni
 
 Il dominio fiscale italiano è complesso e variabile.  
 Per questo esercizio ho scelto un **caso semplice e standard**, con le seguenti assunzioni:
@@ -37,7 +49,7 @@ Non è un sostituto di un sistema fiscale professionale, ma un **motore di simul
 
 ---
 
-## 📚 Logica di calcolo (modello 2026)
+## Logica di calcolo (modello 2026)
 
 Il calcolo segue un flusso standard:
 
@@ -63,7 +75,7 @@ Il calcolo segue un flusso standard:
 
 ---
 
-## 🧩 Funzionalità principali
+## Funzionalità principali
 
 Il risultato è una **pagina web statica unica** dove:
 
@@ -83,7 +95,7 @@ Il calcolo è eseguito lato client in JavaScript, senza dipendenze esterne.
 
 ---
 
-## 🏗 Architettura del progetto
+## Architettura del progetto
 
 Il progetto è pensato come calcolatore semplice, modulare e testabile:
 
@@ -102,7 +114,7 @@ Questa struttura:
 - facilita il testing delle formule;  
 - permette di aggiungere nuove regioni o casi senza riscrivere l’UI.
 
-## 📦 Dati fiscali in JSON – Design pensato per il futuro
+## Dati fiscali in JSON – Design pensato per il futuro
 
 - Aliquote IRPEF, detrazioni, addizionali regionali e comunali sono descritte in **file JSON separati** invece che nel codice.  
 - Attualmente la demo usa solo il caso **Milano, Lombardia**, senza interazione dinamica UI→JSON.  
@@ -112,7 +124,7 @@ Questa struttura:
 
 ---
 
-## 🚀 Come usare il prototipo
+## Come usare il prototipo
 
 1. **Apri online**  
    - La demo è ospitata su GitHub Pages:  
@@ -133,7 +145,7 @@ Questa struttura:
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 Il calcolo è **semplificato e deterministico**, pensato per scopi didattici e di portfolio.  
 Il netto reale può variare in base a:
