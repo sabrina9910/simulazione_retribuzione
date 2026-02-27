@@ -1,7 +1,7 @@
 # 💰 Simulazione RAL → Netto Italia 2026  
 
 
-![Live Demo](https://sabrina9910.github.io/simulazione_retribuzione/)
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-GitHub_Pages-blue?style=for-the-badge)](https://sabrina9910.github.io/simulazione_retribuzione/)
 
 Questo progetto è un **prototipo web interattivo** che simula la proiezione di **retribuzione netta annuale** partendo da una **Retribuzione Annua Lorda (RAL)**, mostrando tutte le principali voci trattenute in busta paga (INPS, IRPEF, addizionali, detrazioni).
 
@@ -101,6 +101,14 @@ Questa struttura:
 - separa modello da presentazione;  
 - facilita il testing delle formule;  
 - permette di aggiungere nuove regioni o casi senza riscrivere l’UI.
+
+## 📦 Dati fiscali in JSON – Design pensato per il futuro
+
+- Aliquote IRPEF, detrazioni, addizionali regionali e comunali sono descritte in **file JSON separati** invece che nel codice.  
+- Attualmente la demo usa solo il caso **Milano, Lombardia**, senza interazione dinamica UI→JSON.  
+- Questa struttura permetterà, in futuro, di:
+  - cambiare facilmente **regione e città** selezionabili in interfaccia;  
+  - aggiornare le **percentuali del calcolatore** modificando solo i JSON, senza toccare il motore di calcolo.  
 
 ---
 
