@@ -4,24 +4,66 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Prototipo RAL → Netto (Milano)</title>
+    <title>RAL → Netto Italia 2026 | Calcolatore Retribuzione</title>
+    <meta name="description" content="Calcola il netto in busta paga partendo dalla RAL: IRPEF, INPS, detrazioni e addizionali. Aggiornato al 2026, zero setup.">
+    <meta name="author" content="Sabrina">
+    <meta property="og:title" content="Calcolatore RAL → Netto Italia 2026">
+    <meta property="og:description" content="Da lordo a netto in un click. Breakdown completo: IRPEF, INPS, addizionali regionali e comunali.">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
     <main class="container">
         <header>
-            <h1>Calcolatore RAL → Netto (prototipo)</h1>
+            <div class="header-badge">Italia 2026 · Milano</div>
+            <h1>RAL → Netto</h1>
             <p class="subtitle">
-                Scenario: dipendente (indeterminato), residente a Milano, nessuna agevolazione.
+                Scopri quanto resta in busta paga. Inserisci la RAL, il tool fa il resto.
             </p>
         </header>
 
-        <section class="card">
+        <!-- ═══════════════════════════════════════════════
+             HERO DEMO: grafico iniziale visibile al caricamento
+             ═══════════════════════════════════════════════ -->
+        <section id="heroCard" class="card hero-card">
+            <div class="hero-layout">
+                <div class="hero-chart-col">
+                    <canvas id="heroChart" width="260" height="260"></canvas>
+                    <div id="heroLegend" class="chart-legend"></div>
+                </div>
+                <div class="hero-info-col">
+                    <div class="hero-title">Esempio: RAL 30.000€</div>
+                    <div class="hero-kpis">
+                        <div class="hero-kpi">
+                            <span class="hero-kpi-label">Lordo annuo</span>
+                            <span class="hero-kpi-value" id="heroLordo">—</span>
+                        </div>
+                        <div class="hero-kpi">
+                            <span class="hero-kpi-label">Netto mensile</span>
+                            <span class="hero-kpi-value hero-kpi-highlight" id="heroNetto">—</span>
+                        </div>
+                        <div class="hero-kpi">
+                            <span class="hero-kpi-label">Trattenute totali</span>
+                            <span class="hero-kpi-value" id="heroTrattenute">—</span>
+                        </div>
+                    </div>
+                    <p class="hero-cta-text">👇 Inserisci la tua RAL sotto per un calcolo personalizzato</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             INPUT
+             ═══════════════════════════════════════════════ -->
+        <section class="card" id="inputCard">
             <h2>Input</h2>
 
             <p class="disclaimer">
-                Disclaimer: questo è un calcolo annuale semplificato. Il netto reale può variare mese per mese
+                ⚠️ Calcolo annuale semplificato a scopo didattico. Il netto reale può variare mese per mese
                 (straordinari, premi, assenze, conguagli 730, addizionali trattenute a rate, ecc.).
             </p>
 
@@ -88,14 +130,14 @@
             </div>
 
             <div class="actions">
-                <button id="calcBtn" type="button">Calcola</button>
+                <button id="calcBtn" type="button">🧮 Calcola netto</button>
                 <button id="resetBtn" class="secondary" type="button">Reset</button>
             </div>
 
             <div class="quickActions">
-                <button id="exampleBtn" class="secondary" type="button">Carica esempio (RAL 35.000€)</button>
-                <button id="compareBtn" class="secondary" type="button">Confronta 12 vs 13</button>
-                <button id="sourcesBtn" class="secondary" type="button">Apri fonti</button>
+                <button id="exampleBtn" class="secondary" type="button">⚡ Carica esempio (RAL 35.000€)</button>
+                <button id="compareBtn" class="secondary" type="button">📊 Confronta 12 vs 13</button>
+                <button id="sourcesBtn" class="secondary" type="button">📖 Apri fonti</button>
             </div>
 
             <p class="hint">
@@ -104,6 +146,9 @@
             </p>
         </section>
 
+        <!-- ═══════════════════════════════════════════════
+             OUTPUT
+             ═══════════════════════════════════════════════ -->
         <section id="results" class="card" style="display:none;">
             <h2>Output</h2>
 
@@ -114,12 +159,12 @@
 
             <div id="panelRisultato">
                 <div class="kpis">
-                    <div class="kpi">
+                    <div class="kpi kpi-primary">
                         <div class="kpi-label">Netto annuo</div>
                         <div class="kpi-value" id="nettoAnnuo"></div>
                     </div>
 
-                    <div class="kpi">
+                    <div class="kpi kpi-primary">
                         <div class="kpi-label">Netto mensile</div>
                         <div class="kpi-value" id="nettoMensile"></div>
                     </div>
@@ -128,6 +173,12 @@
                         <div class="kpi-label">Totale trattenute</div>
                         <div class="kpi-value" id="totTrattenute"></div>
                     </div>
+                </div>
+
+                <!-- Grafico donut breakdown -->
+                <div class="chart-container">
+                    <canvas id="breakdownChart" width="260" height="260"></canvas>
+                    <div id="chartLegend" class="chart-legend"></div>
                 </div>
 
                 <details class="details" style="margin-top:10px;">
@@ -170,6 +221,9 @@
             </div>
         </section>
 
+        <!-- ═══════════════════════════════════════════════
+             DIALOG FONTI
+             ═══════════════════════════════════════════════ -->
         <dialog id="sourcesDialog" class="dialog">
             <div class="dialogHeader">
                 <h3>Fonti e parametri usati</h3>
@@ -190,6 +244,13 @@
                 <div id="sourcesLinks"></div>
             </div>
         </dialog>
+
+        <!-- ═══════════════════════════════════════════════
+             FOOTER
+             ═══════════════════════════════════════════════ -->
+        <footer class="site-footer">
+            <p>Progetto portfolio · Dati fiscali Italia 2026 · <a href="https://github.com/sabrina9910/simulazione_retribuzione" target="_blank" rel="noreferrer">GitHub</a></p>
+        </footer>
     </main>
 
     <script type="module" src="./src/app.js"></script>

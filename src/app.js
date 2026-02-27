@@ -1,13 +1,159 @@
+/**
+ * @file app.js — Controller UI per il calcolatore RAL → Netto
+ *
+ * Gestisce:
+ *   1. Lettura degli input dall'interfaccia utente
+ *   2. Chiamata alle funzioni di calcolo (importate da tax.js)
+ *   3. Rendering dei risultati (KPI, tabelle, grafici, formule)
+ *   4. Interazioni secondarie (confronto 12/13, dialog fonti, copia parametri)
+ *   5. Demo iniziale con grafico lordo/netto al caricamento della pagina
+ *
+ * Architettura: questo file NON contiene logica di calcolo fiscale.
+ * Tutta la matematica vive in tax.js (funzioni pure, testabili).
+ */
+
 import { computeNetto, PARAMS } from "./tax.js";
 
+// ─────────────────────────────────────────────────────────
+//  UTILITY
+// ─────────────────────────────────────────────────────────
+
+/** Formattatore per valuta italiana (€ con separatore migliaia) */
 const eur = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" });
 
+/**
+ * Shortcut per document.getElementById.
+ * @param {string} id - ID dell'elemento DOM
+ * @returns {HTMLElement}
+ */
 function $(id) { return document.getElementById(id); }
+
+/**
+ * Converte una stringa "yes"/"no" in booleano.
+ * @param {string} v - Valore dal <select>
+ * @returns {boolean}
+ */
 function toBool(v) { return v === "yes"; }
+
+/**
+ * Genera una riga <tr> con label a sinistra e valore a destra.
+ * Usata per costruire le tabelle di breakdown.
+ *
+ * @param {string} label - Descrizione della voce (es. "IRPEF lorda")
+ * @param {string} value - Valore formattato (es. "€ 6.440,00")
+ * @returns {string} HTML della riga <tr>
+ */
 function row(label, value) {
     return `<tr><td>${label}</td><td style="text-align:right;">${value}</td></tr>`;
 }
 
+// ─────────────────────────────────────────────────────────
+//  GRAFICO A TORTA (CANVAS — nessuna libreria esterna)
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Disegna un grafico a ciambella (donut chart) nel <canvas> specificato.
+ * Mostra visivamente la suddivisione RAL tra netto e trattenute.
+ *
+ * Colori:
+ *   - Verde acqua → Netto in busta
+ *   - Blu         → INPS lavoratore
+ *   - Viola       → IRPEF netta
+ *   - Arancio     → Addizionali (regionale + comunale)
+ *
+ * @param {string} canvasId - ID dell'elemento <canvas>
+ * @param {Object} res - Risultato di computeNetto() con tutti i campi
+ */
+function drawDonutChart(canvasId, res) {
+    const canvas = $(canvasId);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+
+    /* Dimensione logica fissa, pixel reali scaled per retina */
+    const size = 260;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = size + "px";
+    canvas.style.height = size + "px";
+    ctx.scale(dpr, dpr);
+
+    const cx = size / 2;
+    const cy = size / 2;
+    const outerR = 110;
+    const innerR = 65;
+
+    /* Fette: netto, INPS, IRPEF netta, addizionali */
+    const addizionali = res.addizionaleRegionale + res.addizionaleComunale;
+    const slices = [
+        { value: res.nettoAnnuo, color: "#22d3a7", label: "Netto" },
+        { value: res.inps, color: "#4aa3ff", label: "INPS" },
+        { value: res.irpefNetta, color: "#a78bfa", label: "IRPEF" },
+        { value: addizionali, color: "#f59e0b", label: "Addiz." }
+    ];
+
+    const total = slices.reduce((s, sl) => s + sl.value, 0);
+    if (total === 0) return;
+
+    let startAngle = -Math.PI / 2;
+
+    for (const slice of slices) {
+        const sweep = (slice.value / total) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR, startAngle, startAngle + sweep);
+        ctx.arc(cx, cy, innerR, startAngle + sweep, startAngle, true);
+        ctx.closePath();
+        ctx.fillStyle = slice.color;
+        ctx.fill();
+        startAngle += sweep;
+    }
+
+    /* Testo centrale: netto mensile */
+    ctx.fillStyle = "#e7ecff";
+    ctx.font = "bold 20px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(eur.format(res.nettoMensile), cx, cy - 8);
+
+    ctx.fillStyle = "#a9b4d0";
+    ctx.font = "12px system-ui, sans-serif";
+    ctx.fillText("netto/mese", cx, cy + 12);
+}
+
+/**
+ * Costruisce la legenda HTML sotto il grafico donut.
+ *
+ * @param {Object} res - Risultato di computeNetto()
+ * @returns {string} HTML con pallini colorati + label + importo
+ */
+function buildChartLegend(res) {
+    const addizionali = res.addizionaleRegionale + res.addizionaleComunale;
+    const items = [
+        { color: "#22d3a7", label: "Netto", value: res.nettoAnnuo },
+        { color: "#4aa3ff", label: "INPS", value: res.inps },
+        { color: "#a78bfa", label: "IRPEF netta", value: res.irpefNetta },
+        { color: "#f59e0b", label: "Addizionali", value: addizionali }
+    ];
+
+    return items.map(it =>
+        `<span class="legend-item">
+            <span class="legend-dot" style="background:${it.color};"></span>
+            ${it.label}: <strong>${eur.format(it.value)}</strong>
+        </span>`
+    ).join("");
+}
+
+// ─────────────────────────────────────────────────────────
+//  TABS (Risultato / Metodo)
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Attiva una delle due tab (Risultato o Metodo) nella sezione output,
+ * nascondendo l'altra.
+ *
+ * @param {"risultato"|"metodo"} active - Tab da mostrare
+ */
 function setTab(active) {
     const isRes = active === "risultato";
     $("panelRisultato").style.display = isRes ? "block" : "none";
@@ -19,6 +165,16 @@ function setTab(active) {
 $("tabRisultato").addEventListener("click", () => setTab("risultato"));
 $("tabMetodo").addEventListener("click", () => setTab("metodo"));
 
+// ─────────────────────────────────────────────────────────
+//  RENDERING
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Renderizza il pannello "Metodo" con la lista numerata delle formule
+ * usate nel calcolo, inclusi i parametri correnti.
+ *
+ * @param {Object} res - Risultato di computeNetto()
+ */
 function renderMethod(res) {
     const modeText = res.comSogliaMode === "notch"
         ? "notch (se superi la soglia, paghi su tutto)"
@@ -40,11 +196,20 @@ function renderMethod(res) {
     $("methodBox").innerHTML = `<ol>${lines.map(l => `<li>${l}</li>`).join("")}</ol>`;
 }
 
+/**
+ * Nasconde la card di confronto 12 vs 13 mensilità.
+ */
 function hideComparison() {
     $("compareCard").style.display = "none";
     $("compareBody").innerHTML = "";
 }
 
+/**
+ * Renderizza il confronto fianco a fianco tra 12 e 13 mensilità.
+ * Mostra netto annuo, netto mensile e la differenza per ogni opzione.
+ *
+ * @param {Object} baseInputs - Input utente (la proprietà mensilita verrà sovrascritta)
+ */
 function renderComparison(baseInputs) {
     const inputs12 = { ...baseInputs, mensilita: 12 };
     const inputs13 = { ...baseInputs, mensilita: 13 };
@@ -65,6 +230,15 @@ function renderComparison(baseInputs) {
     $("compareCard").style.display = "block";
 }
 
+/**
+ * Renderizza tutti i risultati del calcolo nell'interfaccia:
+ *   - KPI principali (netto annuo, mensile, trattenute)
+ *   - Tabella breakdown dettagliato
+ *   - Grafico donut con legenda
+ *   - Tab metodo con formule
+ *
+ * @param {Object} res - Risultato completo di computeNetto()
+ */
 function render(res) {
     $("nettoAnnuo").textContent = eur.format(res.nettoAnnuo);
     $("nettoMensile").textContent = eur.format(res.nettoMensile);
@@ -93,6 +267,11 @@ function render(res) {
     $("breakdownBody").innerHTML = body.join("");
     renderMethod(res);
 
+    /* Grafico donut */
+    drawDonutChart("breakdownChart", res);
+    const legendEl = $("chartLegend");
+    if (legendEl) legendEl.innerHTML = buildChartLegend(res);
+
     $("results").style.display = "block";
     setTab("risultato");
     $("lordoAnnuo").textContent = eur.format(res.ral);
@@ -104,6 +283,16 @@ function render(res) {
 
 }
 
+// ─────────────────────────────────────────────────────────
+//  LETTURA INPUT
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Legge tutti i campi del form e ritorna un oggetto pronto
+ * per essere passato a computeNetto().
+ *
+ * @returns {Object} Input normalizzati per il motore di calcolo
+ */
 function readInputs() {
     const ral = Number($("ral").value);
     const include13 = $("include13").checked;
@@ -121,6 +310,11 @@ function readInputs() {
     };
 }
 
+// ─────────────────────────────────────────────────────────
+//  EVENT LISTENERS
+// ─────────────────────────────────────────────────────────
+
+/** Pulsante "Calcola": valida la RAL e renderizza i risultati */
 $("calcBtn").addEventListener("click", () => {
     const inputs = readInputs();
 
@@ -133,6 +327,7 @@ $("calcBtn").addEventListener("click", () => {
     render(computeNetto(inputs));
 });
 
+/** Pulsante "Confronta 12 vs 13": calcola e mostra la comparazione */
 $("compareBtn").addEventListener("click", () => {
     const inputs = readInputs();
 
@@ -145,6 +340,10 @@ $("compareBtn").addEventListener("click", () => {
     renderComparison({ ...inputs });
 });
 
+/**
+ * Pulsante "Carica esempio": inserisce RAL 35.000€ con tutti i parametri
+ * standard e lancia immediatamente il calcolo.
+ */
 $("exampleBtn").addEventListener("click", () => {
     $("ral").value = "35000";
     $("include13").checked = true;
@@ -163,6 +362,9 @@ $("exampleBtn").addEventListener("click", () => {
     render(computeNetto(inputs));
 });
 
+/**
+ * Ripristina tutti i campi ai valori di default e nasconde i risultati.
+ */
 function resetParameters() {
     $("ral").value = "";
     $("include13").checked = true;
@@ -178,11 +380,22 @@ function resetParameters() {
 
     hideComparison();
     $("results").style.display = "none";
+
+    /* Ripristina la hero card con il grafico demo */
+    const heroCard = $("heroCard");
+    if (heroCard) heroCard.style.display = "block";
 }
 
 $("resetBtn").addEventListener("click", resetParameters);
 
-/* ===== Dialog fonti: popolamento dinamico ===== */
+// ─────────────────────────────────────────────────────────
+//  DIALOG FONTI: popolamento dinamico
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Costruisce i contenuti della dialog "Fonti e parametri usati"
+ * leggendo i parametri correnti da PARAMS e dallo stato UI.
+ */
 function buildSourcesDialogContent() {
     const inputs = readInputs();
     const mens = inputs.mensilita;
@@ -234,6 +447,17 @@ dialog.addEventListener("click", (e) => {
         rect.left <= e.clientX && e.clientX <= rect.right;
     if (!inDialog) dialog.close();
 });
+
+// ─────────────────────────────────────────────────────────
+//  COPIA PARAMETRI (clipboard)
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Costruisce il payload JSON con tutti i parametri e lo stato UI corrente,
+ * utile per debug o per condividere una configurazione.
+ *
+ * @returns {Object} Oggetto con timestamp, PARAMS e stato UI
+ */
 function buildCopyPayload() {
     const inputs = readInputs();
 
@@ -253,6 +477,10 @@ function buildCopyPayload() {
     };
 }
 
+/**
+ * Mostra un messaggio di stato nella dialog fonti (es. "Copiato!").
+ * @param {string} msg - Messaggio da mostrare
+ */
 function setCopyStatus(msg) {
     const el = $("copyStatus");
     if (!el) return;
@@ -290,3 +518,44 @@ $("copyParamsBtn").addEventListener("click", async () => {
         }
     }
 });
+
+// ─────────────────────────────────────────────────────────
+//  DEMO INIZIALE: grafico + calcolo al caricamento
+// ─────────────────────────────────────────────────────────
+
+/**
+ * All'avvio della pagina, mostra un calcolo di esempio (RAL 30.000€)
+ * nella hero card con grafico donut — così il recruiter vede subito
+ * cosa fa il tool senza dover cliccare nulla.
+ */
+function initHeroDemo() {
+    const demoRAL = 30000;
+    const demoResult = computeNetto({
+        ral: demoRAL,
+        mensilita: 13,
+        inpsRate: 0.0919,
+        applyExtra1PctInps: true,
+        useDetrazione: true,
+        useAddReg: true,
+        useAddCom: true,
+        comSogliaMode: "franchigia"
+    });
+
+    /* Aggiorna i KPI nella hero card */
+    const heroNetto = $("heroNetto");
+    const heroTrattenute = $("heroTrattenute");
+    const heroLordo = $("heroLordo");
+
+    if (heroNetto) heroNetto.textContent = eur.format(demoResult.nettoMensile);
+    if (heroTrattenute) heroTrattenute.textContent = eur.format(demoResult.trattenuteTotali);
+    if (heroLordo) heroLordo.textContent = eur.format(demoResult.ral);
+
+    /* Disegna il donut nella hero card */
+    drawDonutChart("heroChart", demoResult);
+
+    const heroLegend = $("heroLegend");
+    if (heroLegend) heroLegend.innerHTML = buildChartLegend(demoResult);
+}
+
+/* Lancia la demo hero al caricamento del DOM */
+initHeroDemo();
