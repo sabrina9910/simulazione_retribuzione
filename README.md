@@ -59,7 +59,7 @@ Il calcolo segue un flusso standard:
      - **addizionale comunale Milano**.
 
 5. **Netto annuo → netto mensile**  
-   - Divide il netto annuo in 12 mensilità (opzionalmente 13, se supportato nell’interfaccia).
+   - Divide il netto annuo in 12 o 13 mensilità.
 
 ---
 
